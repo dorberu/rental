@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script type="text/javascript" src="js/jsqrcode/src/grid.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/version.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/detector.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/formatinf.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/errorlevel.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/bitmat.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/datablock.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/bmparser.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/datamask.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/rsdecoder.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/gf256poly.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/gf256.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/decoder.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/qrcode.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/findpat.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/alignpat.js"></script>
+    <script type="text/javascript" src="js/jsqrcode/src/databr.js"></script>
+    <script type="text/javascript" src="js/deflate.js"></script>
+    <script type="text/javascript" src="js/inflate.js"></script>
+    <script type="text/javascript" src="js/constants.js"></script>
+    <script type="text/javascript" src="js/qr_exchange.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery-qrcode/jquery.qrcode.min.js"></script>
+    <title>Camera with mediaDevice</title>
+</head>
+
+<body>
+    <!-- <button onclick="startVideo()">Start</button>
+  <br />
+  <video id="local_video" autoplay style="width: 320px; height: 240px; border: 1px solid black;"></video> -->
+    <div id="qr_code_area"></div>
+    <video id="video"></video>
+    <form id="control"></form>
+    <span id="result"></span>
+</body>
+
+<script type="text/javascript">
+    var obj = {
+        data0: "abcdefghijklmnopqrstuvwxyz",
+        data1: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        data2: "0123456789"
+    };
+    var stop = createMultiQR(obj, "qr_code_area", 100);
+
+    document.getElementById("qr_code_area").onclick = function () {
+        stop();
+    };
+
+    var video = document.getElementById("video");
+    var control = document.getElementById("control");
+    var result = document.getElementById("result");
+
+    getVideoSources(function (cam) {
+        console.log("getVideoSources cam", cam);
+        var b = document.createElement("input");
+        b.type = "button";
+        b.value = cam.name;
+        b.onclick = getMain(cam.id);
+        control.appendChild(b);
+        console.log('getVideoSources add button');
+    });
+
+    function getMain(cam_id) {
+        console.log("getMain");
+        return function () {
+            main(cam_id);
+        };
+    }
+
+    function main(cam_id) {
+        navigator.getUserMedia({
+            audio: false,
+            video: {
+                optional: [{
+                    width: 1280
+                }, {
+                    sourceId: cam_id
+                }]
+            }
+        }, function (stream) { // success
+            console.log("Start Video", stream);
+            localStream = stream;
+            video.srcObject = stream;
+            video.play();
+            video.volume = 0;
+            var stop = startReadQR(video, function (obj) {
+                stop();
+                success(obj);
+            }, function () { });
+        }, function (e) { // error
+            console.error("Error on start video: " + e.code);
+        });
+    };
+
+    function success(obj) {
+        console.log("Success", obj);
+        result.innerText = JSON.stringify(obj);
+    }
+
+//   let localVideo = document.getElementById('local_video');
+//   let localStream;
+
+//   // --- prefix -----
+//   navigator.getUserMedia  = navigator.getUserMedia    || navigator.webkitGetUserMedia ||
+//                             navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+//   // ---- 新旧APIをPromiseでラップする ----
+//   function getDeviceStream(option) {
+//     if ('getUserMedia' in navigator.mediaDevices) {
+//       console.log('navigator.mediaDevices.getUserMadia');
+//       return navigator.mediaDevices.getUserMedia(option);
+//     }
+//     else {
+//       console.log('wrap navigator.getUserMadia with Promise');
+//       return new Promise(function(resolve, reject){    
+//         navigator.getUserMedia(option,
+//           resolve,
+//           reject
+//         );
+//       });      
+//     }
+//   }
+
+//   // 利用例
+//   function startVideo() {
+//     getDeviceStream({video: {optional: [{
+//             width: 320
+//           }, {
+//             sourceId: cam_id
+//           }]}, audio: false})
+//     .then(function (stream) { // success
+//       console.log("blob: " + stream);
+//       localStream = stream;
+//       localVideo.srcObject = localStream;
+//       var stop = startReadQR(localVideo, function(obj){
+//           stop();
+//           success(obj);
+//         }, function() {} );
+//     }).catch(function (error) { // error
+//       console.error('getUserMedia error:', error);
+//       return;
+//     });
+//   }
+
+</script>
+
+</html>
